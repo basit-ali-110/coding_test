@@ -41,6 +41,14 @@ class TransactionDataFetcherTest {
   }
 
   @Test
+  void getTotalTransactionAmountSentBy_throwsNotFoundException() {
+    try {
+      dataFetcher.getTotalTransactionAmountSentBy("test_client", transactions);
+      Assertions.fail("Expected to throw " + NotFoundException.class);
+    } catch (NotFoundException e) {}
+  }
+
+  @Test
   void getMaxTransactionAmount() {
     double maxAmount = dataFetcher.getMaxTransactionAmount(transactions);
     Assertions.assertEquals(EXPECTED_MAX_AMOUNT, maxAmount);
@@ -56,6 +64,14 @@ class TransactionDataFetcherTest {
   void hasOpenComplianceIssues() throws NotFoundException {
     boolean hasIssues = dataFetcher.hasOpenComplianceIssues(TEST_CLIENT_1, transactions);
     Assertions.assertTrue(hasIssues);
+  }
+
+  @Test
+  void hasOpenComplianceIssues_clientNotFoundException() {
+    try {
+      dataFetcher.hasOpenComplianceIssues("test client", transactions);
+      Assertions.fail("Expected to throw " + NotFoundException.class);
+    } catch (NotFoundException ignored) {}
   }
 
   @Test

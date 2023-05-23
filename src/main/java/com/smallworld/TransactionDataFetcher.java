@@ -2,7 +2,6 @@ package com.smallworld;
 
 import com.smallworld.exception.NotFoundException;
 import com.smallworld.model.Transaction;
-import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -71,22 +70,20 @@ public class TransactionDataFetcher {
     public boolean hasOpenComplianceIssues(String clientFullName, List<Transaction> transactions)
         throws NotFoundException {
         AtomicReference<Boolean> clientFound = new AtomicReference<>(Boolean.FALSE);
-        boolean hasAllIssuesResolved = transactions.stream().distinct()
+        boolean hasAnyUnResolvedIssue = transactions.stream()
             .filter(transaction -> {
-                if(transaction.senderFullName().equals(clientFullName)
-                || transaction.beneficiaryFullName().equals(clientFullName)) {
+                if (transaction.senderFullName().equals(clientFullName)
+                    || transaction.beneficiaryFullName().equals(clientFullName)) {
                     clientFound.set(true);
                     return true;
                 }
                 return false;
-            }).map(Transaction::issueSolved)
-            .filter(issueResolved -> !issueResolved)
-            .findFirst().orElse(false);
+            }).map(Transaction::issueSolved).anyMatch(issueResolved -> !issueResolved);
 
         if(Boolean.FALSE.equals(clientFound.get())) {
             throw new NotFoundException(String.format("Client: %s not found in transactions", clientFullName));
         }
-        return !hasAllIssuesResolved;
+        return hasAnyUnResolvedIssue;
     }
 
     /**
