@@ -13,22 +13,34 @@ import java.util.Map;
 import java.util.Set;
 
 public class TransactionLoader {
+  private TransactionLoader(){}
   public static Collection<Transaction> loadTransactions(String json) throws IOException {
     ObjectMapper mapper = new ObjectMapper();
     RawJsonTransaction[] transactions = mapper.readValue(json, RawJsonTransaction[].class);
     Map<Long, Transaction> transactionMap = new HashMap<>();
+
     for(RawJsonTransaction rawTransaction : transactions) {
       Transaction transaction = transactionMap.computeIfAbsent(rawTransaction.transactionID(),
-          s -> new Transaction(rawTransaction.transactionID(),
-              rawTransaction.transactionAmount(), rawTransaction.senderFullName(),
-              rawTransaction.senderAge(), rawTransaction.beneficiaryFullName(),
-              rawTransaction.beneficiaryAge(), new HashSet<>()));
+          s -> createATransaction(rawTransaction));
       Set<Issue> issueList = transaction.issues();
+
       if(rawTransaction.issueId() != null) {
-        issueList.add(new Issue(rawTransaction.issueId(), rawTransaction.issueSolved(),
-            rawTransaction.issueMessage()));
+        Issue issue = createIssue(rawTransaction);
+        issueList.add(issue);
       }
     }
     return Collections.unmodifiableCollection(transactionMap.values());
+  }
+
+  private static Transaction createATransaction(RawJsonTransaction rawTransaction) {
+    return new Transaction(rawTransaction.transactionID(),
+        rawTransaction.transactionAmount(), rawTransaction.senderFullName(),
+        rawTransaction.senderAge(), rawTransaction.beneficiaryFullName(),
+        rawTransaction.beneficiaryAge(), new HashSet<>());
+  }
+
+  private static Issue createIssue(RawJsonTransaction rawTransaction) {
+    return new Issue(rawTransaction.issueId(), rawTransaction.issueSolved(),
+        rawTransaction.issueMessage());
   }
 }
