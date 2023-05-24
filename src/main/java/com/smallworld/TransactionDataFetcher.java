@@ -34,19 +34,16 @@ public class TransactionDataFetcher {
      */
     public BigDecimal getTotalTransactionAmountSentBy(String senderFullName,
         Collection<Transaction> transactions) throws NotFoundException {
-        AtomicBoolean clientFound = new AtomicBoolean(false);
-        BigDecimal amount= transactions.stream().filter(transaction ->
-            transaction.senderFullName().equals(senderFullName))
-            .map(transaction -> {
-                clientFound.set(true);
-                return transaction.transactionAmount();
-            })
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        List<Transaction> clientTransactions = transactions.stream()
+            .filter(transaction -> transaction.senderFullName().equals(senderFullName)).toList();
 
-        if(clientFound.get()) {
-            return amount;
+        if(clientTransactions.isEmpty()) {
+            throw  new NotFoundException(String.format("Sender with name: %s not found.", senderFullName));
         }
-        throw  new NotFoundException(String.format("Sender with name: %s not found.", senderFullName));
+
+        return clientTransactions.stream()
+            .map(Transaction::transactionAmount)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**
