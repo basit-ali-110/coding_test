@@ -4,6 +4,8 @@ import com.smallworld.exception.NotFoundException;
 import com.smallworld.model.Issue;
 import com.smallworld.model.Transaction;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,7 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import util.TestUtility;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +25,7 @@ class TransactionDataFetcherTest {
 
   @BeforeAll
   public static void setup() throws IOException {
-    String json = TestUtility.getJsonFromTransactionsFile("transactions.json");
+    String json = getJsonFromTransactionsFile("transactions.json");
     Collection<Transaction> transactions = TransactionLoader.loadTransactions(json);
     dataFetcher = new TransactionDataFetcher(transactions);
   }
@@ -111,6 +112,11 @@ class TransactionDataFetcherTest {
   void getTopSender() throws NotFoundException {
     String topSenderClient = dataFetcher.getTopSender();
     Assertions.assertEquals(EXPECTED_TOP_SENDER_CLIENT, topSenderClient);
+  }
+
+  private static String getJsonFromTransactionsFile(String fileName) throws IOException {
+    byte[] bytes = Files.readAllBytes(Paths.get(".", fileName));
+    return new String(bytes);
   }
 
 
