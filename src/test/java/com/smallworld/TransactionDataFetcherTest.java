@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,66 +20,61 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 class TransactionDataFetcherTest {
-
-  private static Collection<Transaction> transactions;
   private static TransactionDataFetcher dataFetcher;
 
   @BeforeAll
   public static void setup() throws IOException {
     String json = TestUtility.getJsonFromTransactionsFile("transactions.json");
-    transactions = TransactionLoader.loadTransactions(json);
-    dataFetcher = new TransactionDataFetcher();
+    Collection<Transaction> transactions = TransactionLoader.loadTransactions(json);
+    dataFetcher = new TransactionDataFetcher(transactions);
   }
 
   @Test
   void getTotalTransactionAmount() {
-    BigDecimal totalAmount = dataFetcher.getTotalTransactionAmount(transactions);
+    BigDecimal totalAmount = dataFetcher.getTotalTransactionAmount();
     Assertions.assertEquals(EXPECTED_TOTAL_AMOUNT, totalAmount);
   }
 
   @Test
   void getTotalTransactionAmountSentBy() throws NotFoundException {
-      BigDecimal totalAmountSent = dataFetcher.getTotalTransactionAmountSentBy(TEST_CLIENT_1, transactions);
+      BigDecimal totalAmountSent = dataFetcher.getTotalTransactionAmountSentBy(TEST_CLIENT_1);
       Assertions.assertEquals(EXPECTED_TOTAL_SENT_AMOUNT_BY_CLIENT1, totalAmountSent);
   }
 
   @Test
   void getTotalTransactionAmountSentBy_throwsNotFoundException() {
     try {
-      dataFetcher.getTotalTransactionAmountSentBy("test_client", transactions);
+      dataFetcher.getTotalTransactionAmountSentBy("test_client");
       Assertions.fail("Expected to throw " + NotFoundException.class);
     } catch (NotFoundException e) {}
   }
 
   @Test
   void getMaxTransactionAmount() {
-    BigDecimal maxAmount = dataFetcher.getMaxTransactionAmount(transactions);
+    BigDecimal maxAmount = dataFetcher.getMaxTransactionAmount();
     Assertions.assertEquals(EXPECTED_MAX_AMOUNT, maxAmount);
   }
 
   @Test
   void countUniqueClients() {
-    long count = dataFetcher.countUniqueClients(transactions);
+    long count = dataFetcher.countUniqueClients();
     Assertions.assertEquals(UNIQUE_CLIENT_COUNT, count);
   }
 
   @Test
   void hasOpenComplianceIssues() throws NotFoundException {
-    boolean hasIssues = dataFetcher.hasOpenComplianceIssues(TEST_CLIENT_1, transactions);
+    boolean hasIssues = dataFetcher.hasOpenComplianceIssues(TEST_CLIENT_1);
     Assertions.assertTrue(hasIssues);
   }
 
   @Test
   void hasOpenComplianceIssues_clientNotFoundException() {
-    try {
-      dataFetcher.hasOpenComplianceIssues("test client", transactions);
-      Assertions.fail("Expected to throw " + NotFoundException.class);
-    } catch (NotFoundException ignored) {}
+      Assertions.assertThrows(NotFoundException.class, () -> dataFetcher.hasOpenComplianceIssues("test client"));
   }
 
   @Test
   void getTransactionsByBeneficiaryName() {
-    Map<String, Collection<Transaction>> beneficiaryToTransactionsMap = dataFetcher.getTransactionsByBeneficiaryName(DUMMY_TRANSACTION_LIST);
+    Map<String, Collection<Transaction>> beneficiaryToTransactionsMap = dataFetcher.getTransactionsByBeneficiaryName();
     for(Map.Entry<String, Collection<Transaction>> beneficiaryToTransactionsPair : EXPECTED_BENEFICIARY_TO_TRANSACTIONS_MAP.entrySet()) {
       String expectedBeneficiary = beneficiaryToTransactionsPair.getKey();
       List<Transaction> expectedTransactionsList = new java.util.ArrayList<>(
@@ -97,26 +91,26 @@ class TransactionDataFetcherTest {
 
   @Test
   void getUnsolvedIssueIds() {
-    Set<Integer> unresolvedIssueIDs = dataFetcher.getUnsolvedIssueIds(transactions);
+    Set<Integer> unresolvedIssueIDs = dataFetcher.getUnsolvedIssueIds();
     Assertions.assertEquals(UNRESOLVED_ISSUE_IDs, unresolvedIssueIDs);
   }
 
   @Test
   void getAllSolvedIssueMessages() {
-    List<String> resolvedTranMessages = dataFetcher.getAllSolvedIssueMessages(transactions);
+    List<String> resolvedTranMessages = dataFetcher.getAllSolvedIssueMessages();
     Assertions.assertEquals(RESOLVED_ISSUE_MSGs, resolvedTranMessages);
   }
 
   @Test
   void getTop3TransactionsByAmount() {
-    List<BigDecimal> max3TransactionAmounts = dataFetcher.getTop3TransactionsByAmount(transactions);
+    List<BigDecimal> max3TransactionAmounts = dataFetcher.getTop3TransactionsByAmount();
     Assertions.assertEquals(EXPECTED_MAX_3_TRAN_AMOUNTS, max3TransactionAmounts);
   }
 
   @Test
-  void getTopSender() {
-    Optional<String> topSenderClient = dataFetcher.getTopSender(transactions);
-    Assertions.assertEquals(EXPECTED_TOP_SENDER_CLIENT, topSenderClient.get());
+  void getTopSender() throws NotFoundException {
+    String topSenderClient = dataFetcher.getTopSender();
+    Assertions.assertEquals(EXPECTED_TOP_SENDER_CLIENT, topSenderClient);
   }
 
 
